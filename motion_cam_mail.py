@@ -168,8 +168,12 @@ def setDropboxClient():
     if (DROPBOX_CLIENT is None):
         # Get your app key and secret from the Dropbox developer website
         try:
-            sess = session.DropboxSession('e2jvd445bhji9as', 'pscaalzdcidsgem', 'app_folder')
-            sess.set_token('owlv0c0mkh1xirc2', 'hz134h95idlsbaf')
+            app_key = 'INSERT_APP_KEY'
+            app_secret = 'INSERT_APP_SECRET'
+            access_key = 'INSERT_ACCESS_KEY'
+            access_secret = 'INSERT_ACCESS_SECRET'
+            sess = session.DropboxSession(app_key, app_secret, 'app_folder')
+            sess.set_token(access_key, access_secret)
             # get instance of dropbox client
             DROPBOX_CLIENT = client.DropboxClient(sess)
         except ErrorResponse as err:
