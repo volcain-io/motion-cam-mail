@@ -1,0 +1,44 @@
+{
+    "debug": {
+        "run_once": "false",
+        "enable_logging": "true"
+    },
+    "camera": {
+        "enable": "true",
+        "led_on": "false",
+        "recording_time_delay": 10,
+        "resolution_height": 800,
+        "resolution_width": 1200,
+        "warm_up_time": 2
+    },
+    "dropbox": {
+        "enable": "true",
+        "dir_name": "motion_cam_mail"
+    },
+    "gpio": {
+        "channel": 18
+    },
+    "ifttt": {
+        "enable": "true",
+        "channel_key": "dNMKFkAa51vtvdq5RHDEts",
+        "event_name": "motion_detected"
+    },
+    "image": {
+        "count": 6,
+        "filetype": ".jpg",
+        "name_prefix": "motion_detected_at_"
+    },
+    "mail": {
+        "enable": "false",
+        "encrypt": "true",
+        "name_from": "SB Tank Erlangen",
+        "name_to": "volcain.io",
+        "recipient_email": "raspi@volcain.org",
+        "smtp_server": "w010191c.kasserver.com",
+        "smtp_port": 587,
+        "smtp_username": "info@sbtank-erlangen.de",
+        "smtp_password": "VUq37VVsoZ3vphrd",
+        "subject": "ALERT: motion detected @",
+        "text": "Go check your Dropbox folder"
+    }
+}

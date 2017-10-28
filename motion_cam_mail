@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+#
+# Raspberry Pi secury system with motion detection, camera & mail notification
+#
+# Copyright (C) 2015 volcain <code@volcain.io>
+#
+# Script manages (start/stop/restart) following:
+#   python script:  call_home.py - a motion detection & camera script with email notification & dropbox support
+
+### START: DO NOT CHANGE (only if you know what you do) ###
+set -e  # automatic exit from bash shell script on error
+
+BIN_ROOT=/root/motion_cam_mail
+BIN_PYTHON=/usr/bin/python                                  # we need python in order to execute the python script
+MOTION_CAM_SCRIPT_NAME=$(basename $0)                       # get first item on command line (which is the program name)
+MOTION_CAM_SCRIPT=${BIN_ROOT}/${MOTION_CAM_SCRIPT_NAME}.py  # python script (see description above)
+MOTION_CAM_PID="/var/run/${MOTION_CAM_SCRIPT_NAME}.pid"     # store process id (pid) in order to manage the python script
+LOG_PATH="${BIN_ROOT}/logs/bash.log"
+POSSIBLE_ARGS="start|stop|status|restart"                   # possible arguments to run this script
+E_WRONG_ARGS=255                                            # wrong arguments
+E_NO_PYTHON=254                                             # no python installed
+E_NOT_ROOT=253                                              # non-root exit error
+E_SCRIPT_NOT_EXISTS_OR_EXEC=252                             # script is missing or isn't executable
+E_SERV_NOT_RUNNING=-1                                       # script is not running (-1 = service is up & running, <> -1 = service is down)
+
+# define vars for terminal output color
+C_RED=""
+C_GREEN=""
+C_YELLOW=""
+C_BLUE=""
+C_RESET=""
+MSG_STATE_OK="[OK]"
+MSG_STATE_FAIL="[FAIL]"
+MSG_FILE="${MOTION_CAM_PID}"
+# set vars if terminal exists
+if [ -t 1 ]; then
+    C_RED=`tput setaf 1`
+    C_GREEN=`tput setaf 2`
+    C_YELLOW=`tput setaf 3`
+    C_BLUE=`tput setaf 4`
+    C_RESET=`tput sgr0`
+    MSG_STATE_OK="[${C_GREEN}OK${C_RESET}]"
+    MSG_STATE_FAIL="[${C_RED}FAIL${C_RESET}]"
+    MSG_FILE="${C_BLUE}${MOTION_CAM_PID}${C_RESET}"
+fi
+### END: DO NOT CHANGE (only if you know what you do) ###
+
+# run script only as root
+if [ "$(id -u)" != "0" ]; then
+    echo "${MSG_STATE_FAIL} User must be root to run this script."
+    exit $E_NOT_ROOT
+fi
+
+# check, if argument is set
+if [ $# -eq 0 ]; then
+    echo "${MSG_STATE_FAIL} No arguments supplied. Usage: $MOTION_CAM_SCRIPT_NAME {$POSSIBLE_ARGS}"
+    exit $E_WRONG_ARGS
+fi
+
+# check, if python is installed
+if [ ! -e "${BIN_PYTHON}" ]; then
+    echo "${MSG_STATE_FAIL} Python ($BIN_PYTHON) must be installed in order to run this script."
+    exit $E_NO_PYTHON
+fi
+
+# check, if python script is existing & executable
+if [[ ! -e $MOTION_CAM_SCRIPT || ! -x $MOTION_CAM_SCRIPT ]]; then
+    echo "${MSG_STATE_FAIL} Python script ($MOTION_CAM_SCRIPT) is either not existing or not executable."
+    exit $E_SCRIPT_NOT_EXISTS_OR_EXEC
+fi
+
+# go check given argument
+case "$1" in
+    start)
+        # start scripts
+        echo "starting motion detection & camera service..."
+        # run python script in background (separate process)
+        $BIN_PYTHON $MOTION_CAM_SCRIPT 2> $LOG_PATH &
+        if [ "$?" = "0" ]; then
+            echo $! > "${MOTION_CAM_PID}"
+            echo "${MSG_STATE_OK} ${MOTION_CAM_SCRIPT_NAME} started"
+        else
+            echo "${MSG_STATE_FAIL} ${MOTION_CAM_SCRIPT_NAME} couldn't be started"
+        fi
+        ;;
+
+    stop)
+        # stop scripts
+        echo "stopping motion detection & camera service..."
+
+        if [ -f "${MOTION_CAM_PID}" ] && ( pkill -F $MOTION_CAM_PID 2> $LOG_PATH ); then
+            echo "${MSG_STATE_OK} ${MOTION_CAM_SCRIPT_NAME} stopped"
+        else
+            echo "${MSG_STATE_FAIL} ${MOTION_CAM_SCRIPT_NAME} could not be stopped. Check ${MSG_FILE} and try to kill manually"
+        fi
+        rm -f $MOTION_CAM_PID 2> $LOG_PATH
+        ;;
+
+    status)
+        # check status of scripts
+        if [ -f "${MOTION_CAM_PID}" ] && ( pgrep -F $MOTION_CAM_PID > /dev/null ); then
+            echo "${MSG_STATE_OK} ${MOTION_CAM_SCRIPT_NAME} is up and running"
+        else
+            echo "${MSG_STATE_FAIL} ${MOTION_CAM_SCRIPT_NAME} not running"
+        fi
+        ;;
+
+    restart)
+        # restart the scripts
+        $0 stop
+        $0 start
+        ;;
+
+        *)
+esac
+
+exit 0
