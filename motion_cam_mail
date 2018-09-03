@@ -5,7 +5,7 @@
 # Copyright (C) 2015 volcain <code@volcain.io>
 #
 # Script manages (start/stop/restart) following:
-#   python script:  call_home.py - a motion detection & camera script with email notification & dropbox support
+#   python script:  motion_cam_mail.py - a motion detection & camera script with email notification & dropbox support
 
 ### START: DO NOT CHANGE (only if you know what you do) ###
 set -e  # automatic exit from bash shell script on error
